@@ -71,5 +71,9 @@ if missing_columns:
     st.stop()
 
 # Check for duplicate question names
+duplicates = survey_df["name"][survey_df["name"].duplicated()].dropna()
+if not duplicates.empty:
+    st.error(f"Duplicate question names found:")
+    st.write(sorted(duplicates.unique()))
+    st.stop()
 
-    
