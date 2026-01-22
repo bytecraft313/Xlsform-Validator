@@ -8,7 +8,6 @@ import streamlit as st
 st.title("XLSForm Checker")
 st.write("Step 1: upload your XLSForm as an Excel file (.xls or .xlsx).")
 
-# ---- File upload only ----
 uploaded_file = st.file_uploader(
     "Upload XLSForm (.xls or .xlsx)",
     type=["xls", "xlsx"]
@@ -21,14 +20,12 @@ if uploaded_file:
     file_bytes = uploaded_file.getvalue()
     file_label = uploaded_file.name
 
-# Stop if no file uploaded
 if not file_bytes:
     st.info("Please upload an Excel XLSForm to continue.")
     st.stop()
 
 st.success(f"Loaded input: {file_label} ({len(file_bytes):,} bytes)")
 
-# ---- Minimal XLSForm sanity check ----
 try:
     survey_df = pd.read_excel(
         io.BytesIO(file_bytes),
@@ -46,3 +43,23 @@ st.success(
     "Looks like a valid XLSForm structure "
     "(found 'survey' sheet and 'name' column)."
 )
+
+# 1. Basic Validation:
+st.subheader("Basic XLSForm Validation")
+ 
+try:
+    xls = pd.ExcelFile(io.BytesIO(file_bytes))
+except Exception as exc:
+    st.error(f"Not a valid Excel file: {exc}")
+    st.stop()
+
+# Check for required sheets
+required_sheets = ["survey", "choices", "settings"]
+missing_sheets = required_sheets - set(xls.sheet_names)
+
+if missing_sheets:
+    st.error(f"Missing required sheets: {', '.join(missing_sheets)}")
+    st.stop()
+
+survey_df = pd.read_excel(xls, sheet_name="survey")
+
