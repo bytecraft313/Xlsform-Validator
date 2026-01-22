@@ -44,7 +44,7 @@ st.success(
     "(found 'survey' sheet and 'name' column)."
 )
 
-# 1. Basic Validation:
+#----- Basic Validation: -----
 st.subheader("Basic XLSForm Validation")
  
 try:
@@ -77,3 +77,12 @@ if not duplicates.empty:
     st.write(sorted(duplicates.unique()))
     st.stop()
 
+# Check for invalid question names
+invalid_name_mask = survey_df["name"].dropna().apply(
+    lambda x: not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", str(x))
+)
+
+if invalid_name_mask.any():
+    st.error(f"Invalid question names (must start with a letter and contain only letters, numbers, and underscores): ")
+    st.dataframe(survey_df[invalid_name_mask, ["name"]])
+    st.stop()
