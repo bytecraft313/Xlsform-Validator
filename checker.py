@@ -63,3 +63,13 @@ if missing_sheets:
 
 survey_df = pd.read_excel(xls, sheet_name="survey")
 
+# Check for required columns
+required_columns = ["name", "type", "label", "required"]
+missing_columns = required_columns - set(survey_df.columns)
+if missing_columns:
+    st.error(f"'survey' sheet is missing required columns: {', '.join(missing_columns)}")
+    st.stop()
+
+# Check for duplicate question names
+
+    
