@@ -86,3 +86,29 @@ if invalid_name_mask.any():
     st.error(f"Invalid question names (must start with a letter and contain only letters, numbers, and underscores): ")
     st.dataframe(survey_df[invalid_name_mask, ["name"]])
     st.stop()
+
+# Check for select_one & select_multiple consistency
+if "choices" in xls.sheet_names:
+    choices_df = pd.read_excel(xls, sheet_name = "choices")
+
+    if not {"list_name","name"}.issubset(choices_df.columns):
+        st.error("'choices' sheet must containt 'list_name' and 'name' columns.")
+        st.stop()
+
+    defined_lists = set(choices.df["list_name"].dropna())
+
+    used_lists = (
+        survey_df["type"]
+        .dropna()
+        .str.extract(r"select_(?:one|multiple)\s+(.+)")
+        [0]
+        .dropna()
+    )
+
+    missing_lists = set(used_lists) - defined_lists
+    if missing_lists:
+        st.error("Missing choice lists referenced in survey:")
+        st.write(sorted(missing_lists))
+        st.stop()
+
+st.success("Basic XLSForm checks successful")
