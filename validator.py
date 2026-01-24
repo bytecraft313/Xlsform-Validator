@@ -1,4 +1,5 @@
 import io
+from random import choices
 from typing import Optional
 
 import re
@@ -111,7 +112,7 @@ if "choices" in xls.sheet_names:
     used_lists = (
         survey_df["type"]
         .dropna()
-        .str.extract(r"select_(?:one|multiple)\s+(.+)")
+        .str.extract(r"select_(?:one|multiple)\s+([^\s]+)")
         [0]
         .dropna()
     )
@@ -120,6 +121,19 @@ if "choices" in xls.sheet_names:
     if missing_lists:
         st.error("Missing choice lists referenced in survey:")
         st.write(sorted(missing_lists))
+        st.stop()
+
+# Check for duplicate chioces inside a list
+if "choices" in xls.sheet_names:
+    dup_choices = (
+        choices_df
+        .dropna(subset=["list_name", "name"])
+        .duplicated(subset=["list_name", "name"])
+    )
+
+    if dup_choices.any():
+        st.error("Duplicate choice names found within the same list:")
+        st.dataframe(choices.loc[dup_choices, ["list_name", "name"]])
         st.stop()
 
 st.success("Basic XLSForm checks successful")
