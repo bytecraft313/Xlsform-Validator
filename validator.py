@@ -1,6 +1,7 @@
 import io
 from typing import Optional
 
+import re
 import pandas as pd
 import streamlit as st
 
@@ -84,7 +85,7 @@ invalid_name_mask = survey_df["name"].dropna().apply(
 
 if invalid_name_mask.any():
     st.error(f"Invalid question names (must start with a letter and contain only letters, numbers, and underscores): ")
-    st.dataframe(survey_df[invalid_name_mask, ["name"]])
+    st.dataframe(survey_df.loc[invalid_name_mask, ["name"]])
     st.stop()
 
 # Check for select_one & select_multiple consistency
@@ -95,7 +96,7 @@ if "choices" in xls.sheet_names:
         st.error("'choices' sheet must containt 'list_name' and 'name' columns.")
         st.stop()
 
-    defined_lists = set(choices.df["list_name"].dropna())
+    defined_lists = set(choices_df["list_name"].dropna())
 
     used_lists = (
         survey_df["type"]
