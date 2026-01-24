@@ -55,7 +55,8 @@ except Exception as exc:
     st.stop()
 
 # Check for required sheets
-required_sheets = ["survey", "choices", "settings"]
+required_sheets = {"survey"}
+
 missing_sheets = required_sheets - set(xls.sheet_names)
 
 if missing_sheets:
@@ -65,7 +66,8 @@ if missing_sheets:
 survey_df = pd.read_excel(xls, sheet_name="survey")
 
 # Check for required columns
-required_columns = ["name", "type", "label", "required"]
+required_columns = {"type", "name"}
+
 missing_columns = required_columns - set(survey_df.columns)
 if missing_columns:
     st.error(f"'survey' sheet is missing required columns: {', '.join(missing_columns)}")
@@ -93,7 +95,7 @@ if "choices" in xls.sheet_names:
     choices_df = pd.read_excel(xls, sheet_name = "choices")
 
     if not {"list_name","name"}.issubset(choices_df.columns):
-        st.error("'choices' sheet must containt 'list_name' and 'name' columns.")
+        st.error("'choices' sheet must contain 'list_name' and 'name' columns.")
         st.stop()
 
     defined_lists = set(choices_df["list_name"].dropna())
