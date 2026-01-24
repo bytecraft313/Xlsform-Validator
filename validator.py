@@ -91,6 +91,14 @@ if invalid_name_mask.any():
     st.stop()
 
 # Check for select_one & select_multiple consistency
+select_used = survey_df["type"].str.contains(
+    r"select_(one|multiple)\b", regex = True, na = False
+).any()
+
+if select_used and "choices" not in xls.sheet_names:
+    st.error("This form uses select_one / select_multiple but has no 'choices' sheet.")
+    st.stop()
+
 if "choices" in xls.sheet_names:
     choices_df = pd.read_excel(xls, sheet_name = "choices")
 
