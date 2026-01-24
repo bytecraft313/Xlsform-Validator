@@ -136,4 +136,10 @@ if "choices" in xls.sheet_names:
         st.dataframe(choices.loc[dup_choices, ["list_name", "name"]])
         st.stop()
 
+# Check for empty type or name cells
+if survey_df["type"].isna().any() or survey_df["name"].isna().any():
+    st.error("Empty cells found in required columns 'type' or 'name'.")
+    st.stop()
+
+
 st.success("Basic XLSForm checks successful")
