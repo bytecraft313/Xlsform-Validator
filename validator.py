@@ -1,5 +1,5 @@
 import io
-from random import choices
+
 from typing import Optional
 
 import re
@@ -64,8 +64,6 @@ if missing_sheets:
     st.error(f"Missing required sheets: {', '.join(missing_sheets)}")
     st.stop()
 
-survey_df = pd.read_excel(xls, sheet_name="survey")
-
 # Check for required columns
 required_columns = {"type", "name"}
 
@@ -123,22 +121,28 @@ if "choices" in xls.sheet_names:
         st.write(sorted(missing_lists))
         st.stop()
 
-# Check for duplicate chioces inside a list
+# Check for duplicate choices inside a list
 if "choices" in xls.sheet_names:
-    dup_choices = (
-        choices_df
-        .dropna(subset=["list_name", "name"])
-        .duplicated(subset=["list_name", "name"])
-    )
+    dup_mask = choices_df.duplicated(subset=["list_name", "name"], keep=False)
+    dup_mask = dup_mask & choices_df["list_name"].notna() & choices_df["name"].notna()
 
-    if dup_choices.any():
+    if dup_mask.any():
         st.error("Duplicate choice names found within the same list:")
-        st.dataframe(choices.loc[dup_choices, ["list_name", "name"]])
+        st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
         st.stop()
 
 # Check for empty type or name cells
-if survey_df["type"].isna().any() or survey_df["name"].isna().any():
-    st.error("Empty cells found in required columns 'type' or 'name'.")
+if survey_df["type"].isna().any():
+    st.error("Empty cells found in required column 'type'.")
+    st.stop()
+
+# end_group / end_repeat rows may have empty name per XLSForm spec
+end_types = {"end_group", "end_repeat"}
+type_normalized = survey_df["type"].fillna("").astype(str).str.strip().str.lower()
+rows_requiring_name = ~type_normalized.isin(end_types)
+missing_name = survey_df["name"].isna() & rows_requiring_name
+if missing_name.any():
+    st.error("Empty cells found in required column 'name' (except 'end_group' / 'end_repeat' rows).")
     st.stop()
 
 
