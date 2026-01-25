@@ -155,9 +155,19 @@ if "choices" in xls.sheet_names:
         st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
         st.stop()
 
-# Check for empty type or name cells TODO: Show the row number where the issue persists
-if survey_df["type"].isna().any():
+# Check for empty type or name cells
+missing_type = survey_df["type"].isna()
+
+if missing_type.any():
     st.error("Empty cells found in required column 'type'.")
+
+    missing_type_df = survey_df.loc[missing_type, ["name"]].copy()
+    missing_type_df["excel_row"] = missing_type_df.index + 2
+
+    st.dataframe(
+        missing_type_df[["excel_row", "name"]],
+        user_container_width = True
+    )
     st.stop()
 
 # end_group / end_repeat rows may have empty name per XLSForm spec
