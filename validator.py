@@ -72,7 +72,7 @@ if missing_columns:
     st.error(f"'survey' sheet is missing required columns: {', '.join(missing_columns)}")
     st.stop()
 
-# Check for duplicate question names
+# Check for duplicate question names  TODO: Show row numbere where the issue persists
 duplicates = survey_df["name"][survey_df["name"].duplicated()].dropna()
 if not duplicates.empty:
     st.error("Duplicate question names found.")
@@ -84,7 +84,7 @@ if not duplicates.empty:
     )
     st.stop()
 
-# Check for invalid question names
+# Check for invalid question names TODO: Show row numbers where the issue persists
 invalid_name_mask = survey_df["name"].dropna().apply(
     lambda x: not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", str(x))
 )
@@ -120,13 +120,13 @@ if "choices" in xls.sheet_names:
         .dropna()
     )
 
-    missing_lists = set(used_lists) - defined_lists
+    missing_lists = set(used_lists) - defined_lists  #TODO: [Optional] Show row number where issue persists
     if missing_lists:
         st.error("Missing choice lists referenced in survey:")
         st.write(sorted(missing_lists))
         st.stop()
 
-# Check for duplicate choices inside a list
+# Check for duplicate choices inside a list TODO: [Optional] Show row numbere where issue persists
 if "choices" in xls.sheet_names:
     dup_mask = choices_df.duplicated(subset=["list_name", "name"], keep=False)
     dup_mask = dup_mask & choices_df["list_name"].notna() & choices_df["name"].notna()
@@ -136,7 +136,7 @@ if "choices" in xls.sheet_names:
         st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
         st.stop()
 
-# Check for empty type or name cells
+# Check for empty type or name cells TODO: Show the row numbere where the issue persists
 if survey_df["type"].isna().any():
     st.error("Empty cells found in required column 'type'.")
     st.stop()
@@ -145,7 +145,7 @@ if survey_df["type"].isna().any():
 end_types = {"end_group", "end_repeat"}
 type_normalized = survey_df["type"].fillna("").astype(str).str.strip().str.lower()
 rows_requiring_name = ~type_normalized.isin(end_types)
-missing_name = survey_df["name"].isna() & rows_requiring_name
+missing_name = survey_df["name"].isna() & rows_requiring_name # TODO: Show the row number werher the issue persists
 if missing_name.any():
     st.error("Empty cells found in required column 'name' (except 'end_group' / 'end_repeat' rows).")
     st.stop()
