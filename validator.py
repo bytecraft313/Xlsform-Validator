@@ -75,8 +75,13 @@ if missing_columns:
 # Check for duplicate question names
 duplicates = survey_df["name"][survey_df["name"].duplicated()].dropna()
 if not duplicates.empty:
-    st.error(f"Duplicate question names found:")
-    st.write(sorted(duplicates.unique()))
+    st.error("Duplicate question names found.")
+    st.caption("Each question name must be unique in an XLSForm.")
+
+    st.dataframe(
+        pd.DataFrame({"question_name": sorted(duplicates.unique())}),
+        use_container_width=True
+    )
     st.stop()
 
 # Check for invalid question names
