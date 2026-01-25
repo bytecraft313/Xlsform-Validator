@@ -123,27 +123,36 @@ if select_used and "choices" not in xls.sheet_names:
     st.stop()
 
 if "choices" in xls.sheet_names:
-    choices_df = pd.read_excel(xls, sheet_name = "choices")
+    choices_df = pd.read_excel(xls, sheet_name="choices")
 
-    if not {"list_name","name"}.issubset(choices_df.columns):
+    if not {"list_name", "name"}.issubset(choices_df.columns):
         st.error("'choices' sheet must contain 'list_name' and 'name' columns.")
         st.stop()
 
     defined_lists = set(choices_df["list_name"].dropna())
 
-    used_lists = (
+    used_lists_df = (
         survey_df["type"]
         .dropna()
         .str.extract(r"select_(?:one|multiple)\s+([^\s]+)")
-        [0]
-        .dropna()
+        .rename(columns={0: "list_name"})
     )
 
-    missing_lists = set(used_lists) - defined_lists  #TODO: [Optional] Show row number where issue persists
-    if missing_lists:
-        st.error("Missing choice lists referenced in survey:")
-        st.write(sorted(missing_lists))
+    used_lists_df["excel_row"] = used_lists_df.index + 2
+    used_lists_df = used_lists_df.dropna(subset=["list_name"])
+
+    missing_lists_mask = ~used_lists_df["list_name"].isin(defined_lists)
+
+    if missing_lists_mask.any():
+        st.error("Missing choice lists referenced in survey.")
+        st.caption("These select_one / select_multiple questions reference lists not defined in the choices sheet.")
+
+        st.dataframe(
+            used_lists_df.loc[missing_lists_mask, ["excel_row", "list_name"]],
+            use_container_width=True
+        )
         st.stop()
+
 
 # Check for duplicate choices inside a list TODO: [Optional] Show row numbere where issue persists
 if "choices" in xls.sheet_names:
