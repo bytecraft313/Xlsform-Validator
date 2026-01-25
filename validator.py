@@ -174,9 +174,18 @@ if missing_type.any():
 end_types = {"end_group", "end_repeat"}
 type_normalized = survey_df["type"].fillna("").astype(str).str.strip().str.lower()
 rows_requiring_name = ~type_normalized.isin(end_types)
-missing_name = survey_df["name"].isna() & rows_requiring_name # TODO: Show the row number where the issue persists
+
+missing_name = survey_df["name"].isna() & rows_requiring_name
 if missing_name.any():
     st.error("Empty cells found in required column 'name' (except 'end_group' / 'end_repeat' rows).")
+    
+    missing_name_df = survey_df.loc[missing_name, ["type"]].copy()
+    missing_name_df["excel_row"] = missing_name_df.index + 2
+
+    st.dataframe(
+        missing_name_df[["excel_row", "type"]],
+        use_container_width = True
+    )
     st.stop()
 
 
