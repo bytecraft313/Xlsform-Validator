@@ -72,26 +72,45 @@ if missing_columns:
     st.error(f"'survey' sheet is missing required columns: {', '.join(missing_columns)}")
     st.stop()
 
-# Check for duplicate question names  TODO: Show row numbere where the issue persists
-duplicates = survey_df["name"][survey_df["name"].duplicated()].dropna()
-if not duplicates.empty:
+# Check for duplicate question names and output the row number if issue exist
+dup_mask = (
+    survey_df["name"].notna() &
+    survey_df["name"].duplicated(keep=False)
+)
+
+if dup_mask.any():
     st.error("Duplicate question names found.")
     st.caption("Each question name must be unique in an XLSForm.")
 
-    st.dataframe(
-        pd.DataFrame({"question_name": sorted(duplicates.unique())}),
-        use_container_width=True
+    dup_df = survey_df.loc[dup_mask, ["name"]].copy()
+    dup_df["excel_row"] = dup_df.index + 2
+    dup_df = dup_df.sort_values(["name", "excel_row"])
+
+    st.data_frame(
+        dup_df[["excel_row", "name"]],
+        use_container_width = True
     )
     st.stop()
 
-# Check for invalid question names TODO: Show row numbers where the issue persists
+
+# Check for invalid question names and output the row number if issue exists
 invalid_name_mask = survey_df["name"].dropna().apply(
     lambda x: not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", str(x))
 )
 
 if invalid_name_mask.any():
-    st.error(f"Invalid question names (must start with a letter and contain only letters, numbers, and underscores): ")
-    st.dataframe(survey_df.loc[invalid_name_mask, ["name"]])
+    st.error(
+        "Invalid question name found." 
+        "Names must start with a letter and contain only letters, numbers, and underscores"
+    )
+
+    invalid_df = survey_df.loc[invalid_name_mask, ["name"]].copy()
+    invalid_df["excel_row"] = invalid_df.index + 2
+
+    st.dataframe(
+        invalid_df[["excel_row", "name"]],
+        user_container_width= True
+    )
     st.stop()
 
 # Check for select_one & select_multiple consistency
@@ -136,7 +155,7 @@ if "choices" in xls.sheet_names:
         st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
         st.stop()
 
-# Check for empty type or name cells TODO: Show the row numbere where the issue persists
+# Check for empty type or name cells TODO: Show the row number where the issue persists
 if survey_df["type"].isna().any():
     st.error("Empty cells found in required column 'type'.")
     st.stop()
@@ -145,7 +164,7 @@ if survey_df["type"].isna().any():
 end_types = {"end_group", "end_repeat"}
 type_normalized = survey_df["type"].fillna("").astype(str).str.strip().str.lower()
 rows_requiring_name = ~type_normalized.isin(end_types)
-missing_name = survey_df["name"].isna() & rows_requiring_name # TODO: Show the row number werher the issue persists
+missing_name = survey_df["name"].isna() & rows_requiring_name # TODO: Show the row number where the issue persists
 if missing_name.any():
     st.error("Empty cells found in required column 'name' (except 'end_group' / 'end_repeat' rows).")
     st.stop()
