@@ -5,6 +5,8 @@ from typing import Optional
 import re
 import pandas as pd
 import streamlit as st
+from pyxform.xls2xform import xls2xform_convert
+from pyxform.errors import PyXFormError
 
 
 st.title("XLSForm Checker")
@@ -229,3 +231,34 @@ if missing_name.any():
 
 
 st.success("Basic XLSForm checks successful")
+
+
+
+#-------------------- Pyxfrom Validation Integration --------------------#
+st.subheader("XLSForm Specification Validation (pyxform)")
+
+try:
+    input_file = io.BytesIO(files_bytes)
+    output_file = io.BytesIO()
+
+    xls2xform_convert(
+        xlsform_path = input_file,
+        xform_path = output_file,
+        validate=True
+    )
+
+    st.success("Pyxform validation successful")
+
+except PyXFormError as exce:
+    st.error("XLSForm failed pyxform validation:")
+    st.caption(
+        "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
+    )
+
+    st.code(str(exc), language="text")
+    st.stop()
+
+except Exception as exc:
+    st.error("Unexpected error during pyxform validation.")
+    st.code(str(exc), language="text")
+    st.stop()
