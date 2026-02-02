@@ -249,7 +249,7 @@ try:
 
     st.success("Pyxform validation successful")
 
-except PyXFormError as exce:
+except PyXFormError as exc:
     st.error("XLSForm failed pyxform validation:")
     st.caption(
         "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
