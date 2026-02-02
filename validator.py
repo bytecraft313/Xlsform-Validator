@@ -127,8 +127,8 @@ if select_used and "choices" not in xls.sheet_names:
 if "choices" in xls.sheet_names:
     choices_df = pd.read_excel(xls, sheet_name="choices")
 
-    if not {"list_name", "name"}.issubset(choices_df.columns):
-        st.error("'choices' sheet must contain 'list_name' and 'name' columns.")
+    if not {"list_name", "value"}.issubset(choices_df.columns):
+        st.error("'choices' sheet must contain 'list_name' and 'value' columns.")
         st.stop()
 
     defined_lists = set(choices_df["list_name"].dropna())
@@ -157,12 +157,12 @@ if "choices" in xls.sheet_names:
 
 # Check for duplicate choices inside a list TODO: [Optional] Show row numbere where issue persists
 if "choices" in xls.sheet_names:
-    dup_mask = choices_df.duplicated(subset=["list_name", "name"], keep=False)
-    dup_mask = dup_mask & choices_df["list_name"].notna() & choices_df["name"].notna()
+    dup_mask = choices_df.duplicated(subset=["list_name", "value"], keep=False)
+    dup_mask = dup_mask & choices_df["list_name"].notna() & choices_df["value"].notna()
 
     if dup_mask.any():
         st.error("Duplicate choice names found within the same list:")
-        st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
+        st.dataframe(choices_df.loc[dup_mask, ["list_name", "value"]])
         st.stop()
 
 
