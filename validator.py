@@ -72,7 +72,7 @@ if missing_columns:
     st.error(f"'survey' sheet is missing required columns: {', '.join(missing_columns)}")
     st.stop()
 
-# Check for duplicate question names and output the row number if issue exist
+# Check for duplicate question names and output the row number if issue exist  ⚠️⚠️⚠️ Covered by Pyxform
 dup_mask = (
     survey_df["name"].notna() &
     survey_df["name"].duplicated(keep=False)
@@ -153,7 +153,6 @@ if "choices" in xls.sheet_names:
         )
         st.stop()
 
-
 # Check for duplicate choices inside a list TODO: [Optional] Show row numbere where issue persists
 if "choices" in xls.sheet_names:
     dup_mask = choices_df.duplicated(subset=["list_name", "name"], keep=False)
@@ -163,6 +162,37 @@ if "choices" in xls.sheet_names:
         st.error("Duplicate choice names found within the same list:")
         st.dataframe(choices_df.loc[dup_mask, ["list_name", "name"]])
         st.stop()
+
+
+# Check for (Unused) Choice Lists and Warn if found (Does not stop the application)
+if "choices" in xls.sheet_names and not used_lists_df.empty:
+    defined_lists = set(choices_df["list_name"].dropna())
+
+    used_lists = set(used_lists_df["list_name"].dropna())
+
+    unused_lists = sorted(defined_lists - used_lists)
+
+    if unused_lists:
+        st.warning("Unused choice lists detected:")
+        st.caption(
+            "These lists are defined in the 'choices' sheet but are not used "
+            "by any select_one / select_multiple questions in the survey sheet. "
+            "This wil NOT break the form, but may indicate leftover or unused data."
+        )
+
+        unused_df = (
+            choices_df[choices_df["list_name"].isin(unused_lists)]
+            .loc[:, ["list_name"]]
+            .copy()
+        )
+
+        unused_df["excel_row"] = unused_df.index + 2
+        unused_df = unused_df.drop_duplicates().sort_values("list_name")
+
+        st.dataframe(
+            unused_df[["excel_row", "list_name"]],
+            use_container_width = True
+        )
 
 # Check for empty type or name cells
 missing_type = survey_df["type"].isna()
