@@ -238,7 +238,7 @@ st.success("Basic XLSForm checks successful")
 st.subheader("XLSForm Specification Validation (pyxform)")
 
 try:
-    input_file = io.BytesIO(files_bytes)
+    input_file = io.BytesIO(file_bytes)
     output_file = io.BytesIO()
 
     xls2xform_convert(
