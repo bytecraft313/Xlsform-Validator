@@ -346,7 +346,7 @@ invalid_lowercase_mask = (~lowercase_mask) & non_standard_mask
 
 # Display the check results with row
 if invalid_lowercase_mask.any():
-    st.warning("Non-standard naming detected (mustbe lowercase).")
+    st.warning("Non-standard naming detected (must be lowercase).")
     st.caption("All question names must be lowercase (snake_case), except for the predefined standard fields.")
 
     invalid_case_df = survey_df.loc[invalid_lowercase_mask, ["name"]].copy()
@@ -359,40 +359,49 @@ if invalid_lowercase_mask.any():
 #TODO: [Optional] Show suggested fix for the non-standard name
 
 
-# --------- Check fo "Image" fields followed immediately by calculate field with name <image_name> + _qa  ---------#
-image_qa_errors = []
+# --------- Check fo Media fields followed immediately by calculate field with name <media_name> + _qa  ---------#
+# Image and Audio 
+MEDIA_QA_RULES = {
+    "image": "_qa",
+    "audio": "_translation",
+}
+
+media_errors = []
 
 for i in range(len(survey_df) - 1):
+
     current_type = survey_df.loc[i, "type_norm"]
     current_name = survey_df.loc[i, "name_norm"]
 
-    if current_type == "image":
+    if current_type in MEDIA_QA_RULES:
 
-        expected_qa_name = f"{current_name}_qa"
+        expected_suffix = MEDIA_QA_RULES[current_type]
+        expected_name = f"{current_name}{expected_suffix}"
 
-        # Look ahead while skipping empty rows
+        # Look forward (skip empty rows)
         j = i + 1
         while j < len(survey_df) and survey_df.loc[j, "type_norm"] == "":
             j += 1
 
-        # If no row exists
+        # No next row
         if j >= len(survey_df):
-            image_qa_errors.append({
+            media_errors.append({
                 "excel_row": i + 2,
-                "image_name": current_name,
-                "issue": "Missing calculate row after image"
+                "type": current_type,
+                "name": current_name,
+                "issue": "Missing calculate row after field"
             })
             continue
 
         next_type = survey_df.loc[j, "type_norm"]
         next_name = survey_df.loc[j, "name_norm"]
 
-        if not (next_type == "calculate" and next_name == expected_qa_name):
-            image_qa_errors.append({
-                "image_excel_row": i + 2,
-                "expected_calculate_row": i + 3,
-                "image_name": current_name,
-                "expected_calculate_name": expected_qa_name,
+        if not (next_type == "calculate" and next_name == expected_name):
+            media_errors.append({
+                "field_excel_row": i + 2,
+                "field_type": current_type,
+                "field_name": current_name,
+                "expected_calculate_name": expected_name,
                 "found_type": next_type,
                 "found_name": next_name,
                 "found_excel_row": j + 2
@@ -400,13 +409,17 @@ for i in range(len(survey_df) - 1):
 
 
 # Display results of the Check
-if image_qa_errors:
-    st.error("Image QA validation failed.")
+if media_errors:
+    st.error("Media QA validation failed.")
 
-    st.caption("Each image question must be immediately followed by a calculate field named '<image_name>_qa'.")
+    st.caption(
+        "Media fields must be followed by a calculate field:\n"
+        "- image → <name>_qa\n"
+        "- audio → <name>_translation"
+    )
 
     st.dataframe(
-        pd.DataFrame(image_qa_errors),
+        pd.DataFrame(media_errors),
         use_container_width = True
     )
 
