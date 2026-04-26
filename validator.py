@@ -9,7 +9,7 @@ from pyxform.xls2xform import xls2xform_convert
 from pyxform.errors import PyXFormError
 
 
-st.title("XLSForm Checker")
+st.title("XLSForm Validator")
 st.write("Step 1: upload your XLSForm as an Excel file (.xls or .xlsx).")
 
 uploaded_file = st.file_uploader(
