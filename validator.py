@@ -214,6 +214,9 @@ if missing_type.any():
 # end_group / end_repeat rows may have empty name per XLSForm spec
 end_types = {"end group", "end repeat"}
 type_normalized = survey_df["type"].fillna("").astype(str).str.strip().str.lower()
+# Keep normalized variants for downstream checks
+survey_df["type_norm"] = type_normalized
+survey_df["name_norm"] = survey_df["name"].fillna("").astype(str).str.strip().str.lower()
 rows_requiring_name = ~type_normalized.isin(end_types)
 
 missing_name = survey_df["name"].isna() & rows_requiring_name
