@@ -312,7 +312,7 @@ survey_names_normalized = (
 required_names_normalized = {n.strip().lower() for n in REQUIRED_STANDARD_NAMES}
 
 # Find Missing Required Standard Names
-missing_standard_names = sorted(required_names_normalized - survey_names_normalized)
+missing_standard_names = sorted(required_names_normalized - set(survey_names_normalized))
 
 # Display check results
 if missing_standard_names:
