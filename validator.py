@@ -88,7 +88,7 @@ if dup_mask.any():
     dup_df["excel_row"] = dup_df.index + 2
     dup_df = dup_df.sort_values(["name", "excel_row"])
 
-    st.data_frame(
+    st.dataframe(
         dup_df[["excel_row", "name"]],
         use_container_width = True
     )
