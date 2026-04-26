@@ -233,32 +233,61 @@ if missing_name.any():
 st.success("Basic XLSForm checks successful")
 
 
+#---------------------- Standardization Checks in Accordance with ATR Specifications: ----------------------#
+# ---------Name Length Check ---------#
+MAX_NAME_LENGTH = 100
+
+name_length_mask = (
+    survey_df["name"]
+    .dropna()
+    .astype(str)
+    .str.len() > MAX_NAME_LENGTH
+)
+
+if name_length_mask.any():
+    st.warning(f"Question names exceeding {MAX_NAME_LENGTH} characters detected.")
+    st.caption(
+        "Shorter names (< = 100 characters) are recommended for better usability and readability."
+    )
+
+    long_name_df = survey_df.loc[name_length_mask, ["name"]].copy()
+    long_name_df["length"] = long_name_df["name"].astype(str).str.len()
+    long_name_df["excel_row"] = long_name_df.index + 2
+
+    st.dataframe(
+        long_name_df[["excel_row", "name", "length"]],
+        use_container_width = True
+    )
+
+
+
+
 
 #-------------------- Pyxfrom Validation Integration --------------------#
-st.subheader("XLSForm Specification Validation (pyxform)")
+# st.subheader("XLSForm Specification Validation (pyxform)")
 
-try:
-    input_file = io.BytesIO(file_bytes)
-    output_file = io.BytesIO()
+# try:
+#     input_file = io.BytesIO(file_bytes)
+#     output_file = io.BytesIO()
 
-    xls2xform_convert(
-        xlsform_path = input_file,
-        xform_path = output_file,
-        validate=True
-    )
+#     xls2xform_convert(
+#         xlsform_path = input_file,
+#         xform_path = output_file,
+#         validate=True
+#     )
 
-    st.success("Pyxform validation successful")
+#     st.success("Pyxform validation successful")
 
-except PyXFormError as exc:
-    st.error("XLSForm failed pyxform validation:")
-    st.caption(
-        "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
-    )
+# except PyXFormError as exc:
+#     st.error("XLSForm failed pyxform validation:")
+#     st.caption(
+#         "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
+#     )
 
-    st.code(str(exc), language="text")
-    st.stop()
+#     st.code(str(exc), language="text")
+#     st.stop()
 
-except Exception as exc:
-    st.error("Unexpected error during pyxform validation.")
-    st.code(str(exc), language="text")
-    st.stop()
+# except Exception as exc:
+#     st.error("Unexpected error during pyxform validation.")
+#     st.code(str(exc), language="text")
+#     st.stop()
