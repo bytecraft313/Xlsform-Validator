@@ -356,6 +356,57 @@ if invalid_lowercase_mask.any():
 #TODO: [Optional] Show suggested fix for the non-standard name
 
 
+# --------- Check fo "Image" fields followed immediately by calculate field with name <image_name> + _qa  ---------#
+image_qa_errors = []
+
+for i in range(len(survey_df) - 1):
+    current_type = survey_df.loc[i, "type_norm"]
+    current_name = survey_df.loc[i, "name_norm"]
+
+    if current_type == "image":
+
+        expected_qa_name = f"{current_name}_qa"
+
+        # Look ahead while skipping empty rows
+        j = i + 1
+        while j < len(survey_df) and survey_df.loc[j, "type_norm"] == "":
+            j += 1
+
+        # If no row exists
+        if j >= len(survey_df):
+            image_qa_errors.append({
+                "excel_row": i + 2,
+                "image_name": current_name,
+                "issue": "Missing calculate row after image"
+            })
+            continue
+
+        next_type = survey_df.loc[j, "type_norm"]
+        next_name = survey_df.loc[j, "name_norm"]
+
+        if not (next_type == "calculate" and next_name == expected_qa_name):
+            image_qa_errors.append({
+                "image_excel_row": i + 2,
+                "expected_calculate_row": i + 3,
+                "image_name": current_name,
+                "expected_calculate_name": expected_qa_name,
+                "found_type": next_type,
+                "found_name": next_name,
+                "found_excel_row": j + 2
+            })
+
+
+# Display results of the Check
+if image_qa_errors:
+    st.error("Image QA validation failed.")
+
+    st.caption("Each image question must be immediately followed by a calculate field named '<image_name>_qa'.")
+
+    st.dataframe(
+        pd.DataFrame(image_qa_errors),
+        use_container_width = True
+    )
+
 #-------------------- Pyxfrom Validation Integration --------------------#
 # st.subheader("XLSForm Specification Validation (pyxform)")
 
