@@ -331,6 +331,30 @@ if missing_standard_names:
 
 #TODO: Show which ones are present for better user experience
 
+# ---------- Check capitalization of "names" column ---------- #
+lowercase_mask = survey_df["name"].dropna().apply(
+    lambda x: re.match(r"^[a-z][a-z0-9_]*$", str(x)) is not None
+)
+
+# Identify rows that should follow the lowercase rule
+non_standard_mask = ~survey_df["name"].astype(str).str.lower().isin(required_names_normalized)
+
+invalid_lowercase_mask = (~lowercase_mask) & non_standard_mask
+
+# Display the check results with row
+if invalid_lowercase_mask.any():
+    st.warning("Non-standard naming detected (mustbe lowercase).")
+    st.caption("All question names must be lowercase (snake_case), except for the predefined standard fields.")
+
+    invalid_case_df = survey_df.loc[invalid_lowercase_mask, ["name"]].copy()
+    invalid_case_df["excel_row"] = invalid_case_df.index + 2
+
+    st.dataframe(
+        invalid_case_df[["excel_row", "name"]],
+        use_container_width = True
+    )
+#TODO: [Optional] Show suggested fix for the non-standard name
+
 
 #-------------------- Pyxfrom Validation Integration --------------------#
 # st.subheader("XLSForm Specification Validation (pyxform)")
