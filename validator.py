@@ -259,8 +259,77 @@ if name_length_mask.any():
         use_container_width = True
     )
 
+# -------- Meta Columns ---------- #
+REQUIRED_STANDARD_NAMES = {
+    "Starttime",
+    "Endtime",
+    "Deviceid",
+    "Subscriberid",
+    "Simid",
+    "Devicephonenum",
+    "Username",
+    "sensor_statistic mean_movement",
+    "sensor_statistic mean_sound_level",
+    "sensor_statistic mean_sound_pitch",
+    "sensor_statistic pct_conversation",
+    "TA",
+    "AA",
+    "duration",
+    "Date_And_Time",
+    "Geopoint",
+    "Surveyor_Id",
+    "Surveyor_Name",
+    "Surveyor_Gender",
+    "Site_Visit_ID",
+    "Site_Visit_Subcategory_ID",
+    "TPMA_Location_Name",
+    "TPMA_Location_ID",
+    "Province",
+    "District",
+    "Village",
+    "Region",
+    "Area_Type",
+    "Line_Ministry_Name",
+    "Line_Ministry_Project_Id",
+    "Line_Ministry_SubProject_Id",
+    "Line_Ministry_Sub_Project_Name_And_Description",
+    "Type_Of_Site_Visit",
+    "Type_Of_Visit",
+    "If_not_a_first_Site_Visit_state_Original_Site_Visit_ID",
+}
 
 
+# Normalize all survey names to lowercase and strip whitespace
+survey_names_normalized = (
+    survey_df["name"]
+    .dropna()
+    .astype(str)
+    .str.strip()
+    .str.lower()
+)
+
+# Normalize all required standard names to lowercase and strip whitespace
+required_names_normalized = {n.strip().lower() for n in REQUIRED_STANDARD_NAMES}
+
+# Find Missing Required Standard Names
+missing_standard_names = sorted(required_names_normalized - survey_names_normalized)
+
+# Display check results
+if missing_standard_names:
+    st.warning("Missing standard organization fields detected.")
+    st.caption("These question names are expected across all ATR related forms, but were not found in this XLSForm.")
+
+    # Map back to original case for display
+    display_names = sorted([
+        next(orig for orig in REQUIRED_STANDARD_NAMES if orig.lower() == m)
+        for m in missing_standard_names
+    ])
+
+    st.dataframe(
+        pd.DataFrame({"missing_field_name": display_names}), use_container_width = True
+    )
+
+#TODO: Show which ones are present for better user experience
 
 
 #-------------------- Pyxfrom Validation Integration --------------------#
