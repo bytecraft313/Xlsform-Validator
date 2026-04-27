@@ -1,4 +1,6 @@
 import io
+import urllib.error
+import urllib.request
 
 from typing import Optional
 
@@ -10,22 +12,102 @@ from pyxform.errors import PyXFormError
 
 
 st.title("XLSForm Validator")
-st.write("Step 1: upload your XLSForm as an Excel file (.xls or .xlsx).")
+st.write("Step 1: provide your XLSForm as an Excel file (.xls or .xlsx), or as a Google Sheet.")
 
-uploaded_file = st.file_uploader(
-    "Upload XLSForm (.xls or .xlsx)",
-    type=["xls", "xlsx"]
+
+def download_google_sheet_as_xlsx(url: str) -> tuple[Optional[bytes], Optional[str]]:
+    """
+    Downloads a public Google Sheet as XLSX bytes.
+
+    Returns:
+        (data, err): data is bytes on success, else None; err is a short error string or None.
+    """
+    url = (url or "").strip()
+    if not url:
+        return None, "Empty URL"
+
+    # Accept common share/edit URLs like:
+    # https://docs.google.com/spreadsheets/d/<ID>/edit#gid=0
+    m = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", url)
+    if not m:
+        return None, "Invalid Google Sheets URL"
+
+    sheet_id = m.group(1)
+    export_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx"
+
+    req = urllib.request.Request(
+        export_url,
+        headers={
+            # Some environments get blocked without a UA; keep it simple.
+            "User-Agent": "Mozilla/5.0",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = resp.read()
+    except urllib.error.HTTPError as exc:
+        # Private sheet commonly yields 401/403; bad id yields 404.
+        return None, f"HTTP {exc.code}"
+    except urllib.error.URLError:
+        return None, "Network error"
+    except Exception:
+        return None, "Unexpected error"
+
+    # Basic sanity check: XLSX is a zip file ("PK").
+    if not data or len(data) < 4 or not data.startswith(b"PK"):
+        return None, "Downloaded file is not an XLSX"
+
+    return data, None
+
+input_method = st.radio(
+    "Choose input method",
+    options=["Upload Excel file", "Google Sheets URL"],
+    horizontal=True,
 )
+
+uploaded_file = None
+sheet_url = ""
+
+if input_method == "Upload Excel file":
+    uploaded_file = st.file_uploader(
+        "Upload XLSForm (.xls or .xlsx)",
+        type=["xls", "xlsx"],
+    )
+else:
+    sheet_url = st.text_input(
+        "Google Sheets URL",
+        placeholder="https://docs.google.com/spreadsheets/d/<ID>/edit#gid=0",
+    )
 
 file_bytes: Optional[bytes] = None
 file_label: str = ""
 
-if uploaded_file:
+if input_method == "Upload Excel file" and uploaded_file:
     file_bytes = uploaded_file.getvalue()
     file_label = uploaded_file.name
+elif input_method == "Google Sheets URL" and sheet_url.strip():
+    data, err = download_google_sheet_as_xlsx(sheet_url)
+    if err:
+        st.error("Unable to access this Google Sheet.")
+
+        st.warning(
+            "This usually means the sheet is private.\n\n"
+            "To fix:\n"
+            "1. Open the sheet\n"
+            "2. Click 'Share'\n"
+            "3. Set to 'Anyone with the link → Viewer'\n"
+            "4. Try again"
+        )
+
+        st.stop()
+
+    file_bytes = data
+    file_label = "Google Sheet (downloaded as .xlsx)"
 
 if not file_bytes:
-    st.info("Please upload an Excel XLSForm to continue.")
+    st.info("Provide an XLSForm (upload an Excel file, or paste a Google Sheets URL) to continue.")
     st.stop()
 
 st.success(f"Loaded input: {file_label} ({len(file_bytes):,} bytes)")
