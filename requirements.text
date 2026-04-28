@@ -2,3 +2,4 @@ streamlit
 pyxform
 pandas
 openpyxl
+lxml
