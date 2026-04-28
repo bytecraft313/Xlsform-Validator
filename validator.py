@@ -126,8 +126,7 @@ if "name" not in survey_df.columns:
     st.stop()
 
 st.success(
-    "Looks like a valid XLSForm structure "
-    "(found 'survey' sheet and 'name' column)."
+    "Valid XLSForm structure."
 )
 
 #----- Basic Validation: -----
@@ -492,7 +491,7 @@ for i in range(len(survey_df) - 1):
 
 # Display results of the Check
 if media_errors:
-    st.error("Media QA validation failed.")
+    st.warning("Media QA validation failed.")
 
     st.caption(
         "Media fields must be followed by a calculate field:\n"
