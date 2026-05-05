@@ -391,7 +391,6 @@ survey_names_normalized = (
     .str.strip()
     .str.lower()
 )
-
 # Normalize all required standard names to lowercase and strip whitespace
 required_names_normalized = {n.strip().lower() for n in REQUIRED_STANDARD_NAMES}
 
