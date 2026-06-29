@@ -504,30 +504,30 @@ if media_errors:
     )
 
 #-------------------- Pyxfrom Validation Integration --------------------#
-# st.subheader("XLSForm Specification Validation (pyxform)")
+st.subheader("XLSForm Specification Validation (pyxform)")
 
-# try:
-#     input_file = io.BytesIO(file_bytes)
-#     output_file = io.BytesIO()
+try:
+    input_file = io.BytesIO(file_bytes)
+    output_file = io.BytesIO()
 
-#     xls2xform_convert(
-#         xlsform_path = input_file,
-#         xform_path = output_file,
-#         validate=True
-#     )
+    xls2xform_convert(
+        xlsform_path = input_file,
+        xform_path = output_file,
+        validate=True
+    )
 
-#     st.success("Pyxform validation successful")
+    st.success("Pyxform validation successful")
 
-# except PyXFormError as exc:
-#     st.error("XLSForm failed pyxform validation:")
-#     st.caption(
-#         "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
-#     )
+except PyXFormError as exc:
+    st.error("XLSForm failed pyxform validation:")
+    st.caption(
+        "These errors come directly from pyxform and are specific to the XLSForm specification and used by SurveyCTO."
+    )
 
-#     st.code(str(exc), language="text")
-#     st.stop()
+    st.code(str(exc), language="text")
+    st.stop()
 
-# except Exception as exc:
-#     st.error("Unexpected error during pyxform validation.")
-#     st.code(str(exc), language="text")
-#     st.stop()
+except Exception as exc:
+    st.error("Unexpected error during pyxform validation.")
+    st.code(str(exc), language="text")
+    st.stop()
