@@ -84,43 +84,51 @@ with st.form("xlsform_input", clear_on_submit=False):
 
     submitted = st.form_submit_button("Validate", type="primary")
 
-if not submitted:
+file_bytes: Optional[bytes] = None
+file_label: str = ""
+
+if submitted:
+    if input_method == "Upload Excel file":
+        if not uploaded_file:
+            st.error("Please upload an XLSForm file.")
+            st.stop()
+        file_bytes = uploaded_file.getvalue()
+        file_label = uploaded_file.name
+    else:
+        if not sheet_url.strip():
+            st.error("Please enter a Google Sheets URL.")
+            st.stop()
+        data, err = download_google_sheet_as_xlsx(sheet_url)
+        if err:
+            st.error("Unable to access this Google Sheet.")
+
+            st.warning(
+                "This usually means the sheet is private.\n\n"
+                "To fix:\n"
+                "1. Open the sheet\n"
+                "2. Click 'Share'\n"
+                "3. Set to 'Anyone with the link → Viewer'\n"
+                "4. Try again"
+            )
+
+            st.stop()
+
+        file_bytes = data
+        file_label = "Google Sheet (downloaded as .xlsx)"
+
+    st.session_state.validation_file_bytes = file_bytes
+    st.session_state.validation_file_label = file_label
+
+elif st.session_state.get("validation_file_bytes"):
+    file_bytes = st.session_state.validation_file_bytes
+    file_label = st.session_state.validation_file_label
+
+else:
     st.info(
         "Upload an Excel file or paste a Google Sheets URL, then click **Validate** "
         "or press **Enter** (Google Sheets URL)."
     )
     st.stop()
-
-file_bytes: Optional[bytes] = None
-file_label: str = ""
-
-if input_method == "Upload Excel file":
-    if not uploaded_file:
-        st.error("Please upload an XLSForm file.")
-        st.stop()
-    file_bytes = uploaded_file.getvalue()
-    file_label = uploaded_file.name
-else:
-    if not sheet_url.strip():
-        st.error("Please enter a Google Sheets URL.")
-        st.stop()
-    data, err = download_google_sheet_as_xlsx(sheet_url)
-    if err:
-        st.error("Unable to access this Google Sheet.")
-
-        st.warning(
-            "This usually means the sheet is private.\n\n"
-            "To fix:\n"
-            "1. Open the sheet\n"
-            "2. Click 'Share'\n"
-            "3. Set to 'Anyone with the link → Viewer'\n"
-            "4. Try again"
-        )
-
-        st.stop()
-
-    file_bytes = data
-    file_label = "Google Sheet (downloaded as .xlsx)"
 
 st.success(f"Loaded input: {file_label} ({len(file_bytes):,} bytes)")
 
