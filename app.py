@@ -61,33 +61,49 @@ def download_google_sheet_as_xlsx(url: str) -> tuple[Optional[bytes], Optional[s
 
     return data, None
 
-input_method = st.radio(
-    "Choose input method",
-    options=["Upload Excel file", "Google Sheets URL"],
-    horizontal=True,
-)
-
-uploaded_file = None
-sheet_url = ""
-
-if input_method == "Upload Excel file":
-    uploaded_file = st.file_uploader(
-        "Upload XLSForm (.xls or .xlsx)",
-        type=["xls", "xlsx"],
+with st.form("xlsform_input", clear_on_submit=False):
+    input_method = st.radio(
+        "Choose input method",
+        options=["Upload Excel file", "Google Sheets URL"],
+        horizontal=True,
     )
-else:
-    sheet_url = st.text_input(
-        "Google Sheets URL",
-        placeholder="https://docs.google.com/spreadsheets/d/<ID>/edit#gid=0",
+
+    uploaded_file = None
+    sheet_url = ""
+
+    if input_method == "Upload Excel file":
+        uploaded_file = st.file_uploader(
+            "Upload XLSForm (.xls or .xlsx)",
+            type=["xls", "xlsx"],
+        )
+    else:
+        sheet_url = st.text_input(
+            "Google Sheets URL",
+            placeholder="https://docs.google.com/spreadsheets/d/<ID>/edit#gid=0",
+        )
+
+    submitted = st.form_submit_button("Validate", type="primary")
+
+if not submitted:
+    st.info(
+        "Upload an Excel file or paste a Google Sheets URL, then click **Validate** "
+        "or press **Enter** (Google Sheets URL)."
     )
+    st.stop()
 
 file_bytes: Optional[bytes] = None
 file_label: str = ""
 
-if input_method == "Upload Excel file" and uploaded_file:
+if input_method == "Upload Excel file":
+    if not uploaded_file:
+        st.error("Please upload an XLSForm file.")
+        st.stop()
     file_bytes = uploaded_file.getvalue()
     file_label = uploaded_file.name
-elif input_method == "Google Sheets URL" and sheet_url.strip():
+else:
+    if not sheet_url.strip():
+        st.error("Please enter a Google Sheets URL.")
+        st.stop()
     data, err = download_google_sheet_as_xlsx(sheet_url)
     if err:
         st.error("Unable to access this Google Sheet.")
@@ -105,10 +121,6 @@ elif input_method == "Google Sheets URL" and sheet_url.strip():
 
     file_bytes = data
     file_label = "Google Sheet (downloaded as .xlsx)"
-
-if not file_bytes:
-    st.info("Provide an XLSForm (upload an Excel file, or paste a Google Sheets URL) to continue.")
-    st.stop()
 
 st.success(f"Loaded input: {file_label} ({len(file_bytes):,} bytes)")
 
