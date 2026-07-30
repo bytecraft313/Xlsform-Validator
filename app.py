@@ -260,7 +260,7 @@ if "choices" in xls.sheet_names and not used_lists_df.empty:
         st.caption(
             "These lists are defined in the 'choices' sheet but are not used "
             "by any select_one / select_multiple questions in the survey sheet. "
-            "This wil NOT break the form, but may indicate leftover or unused data."
+            "This will NOT break the form, but may indicate leftover or unused data."
         )
 
         unused_df = (
@@ -276,6 +276,42 @@ if "choices" in xls.sheet_names and not used_lists_df.empty:
             unused_df[["excel_row", "list_name"]],
             use_container_width = True
         )
+
+        confirm_remove = st.checkbox(
+            "Remove unused choice lists and download a cleaned choices sheet",
+            help=(
+                "Creates an Excel file containing only choice lists that are "
+                "referenced by select_one / select_multiple questions in the survey."
+            ),
+        )
+
+        if confirm_remove:
+            cleaned_choices_df = choices_df[
+                ~choices_df["list_name"].isin(unused_lists)
+            ].copy()
+
+            removed_rows = len(choices_df) - len(cleaned_choices_df)
+            st.info(
+                f"{removed_rows:,} row(s) from {len(unused_lists)} unused list(s) "
+                f"will be removed. The cleaned sheet will keep {len(used_lists)} used list(s)."
+            )
+
+            cleaned_xlsx = io.BytesIO()
+            with pd.ExcelWriter(cleaned_xlsx, engine="openpyxl") as writer:
+                cleaned_choices_df.to_excel(writer, sheet_name="choices", index=False)
+
+            if file_label.endswith((".xlsx", ".xls")):
+                download_name = file_label.rsplit(".", 1)[0] + "_choices_cleaned.xlsx"
+            else:
+                download_name = "choices_cleaned.xlsx"
+
+            st.download_button(
+                label="Download cleaned choices sheet",
+                data=cleaned_xlsx.getvalue(),
+                file_name=download_name,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary",
+            )
 
 # Check for empty type or name cells
 missing_type = survey_df["type"].isna()
